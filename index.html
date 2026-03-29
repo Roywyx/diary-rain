@@ -44,7 +44,7 @@
             z-index: -3;
         }
 
-        /* 加深遮罩，解决背景太亮问题 */
+        /* 加深遮罩 */
         .overlay {
             position: fixed;
             top: 0; left: 0;
@@ -53,7 +53,7 @@
             z-index: -1;
         }
 
-        /* --- 动态小雨及溅射效果 --- */
+        /* 动态小雨 */
         .rain-container {
             position: fixed;
             top: 0; left: 0;
@@ -62,48 +62,18 @@
             z-index: 0;
         }
 
-        .rain-item {
-            position: absolute;
-            top: 0;
-            height: 100%;
-        }
-
+        .rain-item { position: absolute; top: 0; height: 100%; }
         .rain-drop {
             position: absolute;
             background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.6));
-            width: 1px;
-            height: 50px;
-            top: -100px;
+            width: 1px; height: 50px; top: -100px;
             animation: fall linear infinite;
         }
-
         .rain-splash {
-            position: absolute;
-            bottom: 0;
-            left: -5px;
-            width: 12px;
-            height: 4px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transform: scale(0);
-            opacity: 0;
-            animation: splash-ring linear infinite;
+            position: absolute; bottom: 0; left: -5px; width: 12px; height: 4px;
+            border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.2);
+            transform: scale(0); opacity: 0; animation: splash-ring linear infinite;
         }
-
-        .rain-splash::before, .rain-splash::after {
-            content: '';
-            position: absolute;
-            background: rgba(255, 255, 255, 0.3);
-            width: 1.5px;
-            height: 1.5px;
-            border-radius: 50%;
-            top: -2px;
-            opacity: 0;
-            animation: splash-particle linear infinite;
-        }
-
-        .rain-splash::after { left: 8px; animation-delay: 0.05s; }
-        .rain-splash::before { left: 2px; }
 
         @keyframes fall {
             0% { transform: translateY(-100px); opacity: 0; }
@@ -111,18 +81,10 @@
             90% { opacity: 0.6; }
             100% { transform: translateY(100vh); opacity: 0; }
         }
-
         @keyframes splash-ring {
             0%, 94% { transform: scale(0); opacity: 0; }
             95% { transform: scale(0.5); opacity: 0.4; }
             100% { transform: scale(1.5); opacity: 0; }
-        }
-
-        @keyframes splash-particle {
-            0%, 94% { transform: translateY(0) scale(0); opacity: 0; }
-            95% { transform: translateY(0) scale(1); opacity: 0.6; }
-            97% { transform: translateY(-8px) scale(0.8); }
-            100% { transform: translateY(2px) scale(0); opacity: 0; }
         }
 
         /* 玻璃拟态 */
@@ -135,7 +97,7 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
-        /* --- 右上角 Todo 栏 --- */
+        /* --- Todo 栏 (保持原样图标) --- */
         .todo-panel {
             position: fixed;
             top: 25px; right: 25px;
@@ -143,31 +105,16 @@
             padding: 20px;
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
-        .todo-panel.folded {
-            width: 50px; height: 50px; padding: 0; border-radius: 25px;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-        }
-
-        .todo-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .todo-panel.folded .todo-header,
-        .todo-panel.folded .todo-content { display: none; }
-
-        .todo-item {
-            display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; font-size: 0.9rem; line-height: 1.5;
-        }
-
-        .todo-item input[type="checkbox"] { margin-top: 4px; flex-shrink: 0; cursor: pointer; }
-
-        .todo-text { flex: 1; outline: none; border-bottom: 1px solid transparent; word-break: break-all; }
-        .todo-text:focus { border-bottom: var(--accent-color) 1px solid; }
+        .todo-panel.folded { width: 50px; height: 50px; padding: 0; border-radius: 25px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .todo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .todo-panel.folded .todo-header, .todo-panel.folded .todo-content { display: none; }
+        
+        .todo-item { display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; font-size: 0.9rem; }
+        .todo-item input[type="checkbox"] { margin-top: 4px; cursor: pointer; }
+        .todo-text { flex: 1; word-break: break-all; outline: none; }
         .todo-item.done .todo-text { text-decoration: line-through; opacity: 0.5; }
 
-        /* --- 居中日记区 --- */
+        /* 居中日记区 */
         .main-container {
             position: relative; z-index: 10; max-width: 800px; margin: 0 auto;
             padding: 40px 20px; height: 100vh; display: flex; flex-direction: column;
@@ -190,38 +137,29 @@
             padding: 30px; min-height: 180px; display: flex; flex-direction: column; cursor: pointer;
             transition: transform 0.3s ease, background 0.3s ease; position: relative; width: 100%;
         }
-
         .diary-card:hover { transform: scale(1.015); background: rgba(255, 255, 255, 0.12); }
-
-        .card-meta { display: flex; gap: 12px; margin-bottom: 15px; font-size: 0.85rem; opacity: 0.6; align-items: center; }
-
+        .card-meta { display: flex; gap: 15px; margin-bottom: 15px; font-size: 0.85rem; opacity: 0.6; align-items: center; }
         .diary-card p { font-size: 1rem; opacity: 0.85; line-height: 1.8; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-
-        .delete-btn { position: absolute; top: 25px; right: 25px; color: #ff6b6b; opacity: 0; transition: 0.2s; }
+        .delete-btn { position: absolute; top: 25px; right: 25px; color: #ff6b6b; opacity: 0; transition: 0.2s; padding: 5px; }
         .diary-card:hover .delete-btn { opacity: 1; }
 
-        /* --- 控制按钮 --- */
+        /* 控制按钮 */
         .fab-left {
             position: fixed; bottom: 35px; left: 35px;
             background: var(--accent-color); color: #1a1a2e;
             border: none; width: 65px; height: 65px; border-radius: 35px;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 100;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
         .fab-left:hover { width: 160px; }
         .fab-left span { display: none; margin-left: 10px; font-weight: 600; white-space: nowrap; }
         .fab-left:hover span { display: inline; }
 
-        /* 音乐控制按钮 */
         .music-toggle {
-            position: fixed; bottom: 35px; right: 35px;
-            width: 50px; height: 50px; border-radius: 25px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 100; transition: 0.3s;
+            position: fixed; bottom: 35px; right: 35px; width: 50px; height: 50px; border-radius: 25px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; transition: 0.3s;
         }
-        .music-toggle:hover { background: rgba(255, 255, 255, 0.2); }
 
         /* 编辑器模态框 */
         .modal {
@@ -230,14 +168,21 @@
             align-items: center; justify-content: center; z-index: 200;
         }
         .modal.active { display: flex; }
-        .modal-body { width: 90%; max-width: 750px; padding: 40px; }
+        .modal-body { width: 90%; max-width: 750px; padding: 40px; max-height: 90vh; overflow-y: auto; }
         .modal-body input, .modal-body textarea { width: 100%; background: none; border: none; color: white; outline: none; }
         .modal-body input { font-family: 'Ma Shan Zheng', cursive; font-size: 2.2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; margin-bottom: 25px; }
-        .modal-body textarea { height: 300px; resize: none; font-size: 1.1rem; line-height: 1.8; margin-top: 15px; }
+        .modal-body textarea { height: 200px; resize: none; font-size: 1.1rem; line-height: 1.8; margin-top: 15px; }
 
-        .selector { display: flex; gap: 15px; margin-bottom: 20px; }
-        .option { padding: 10px 15px; border-radius: 12px; background: rgba(255,255,255,0.05); cursor: pointer; transition: 0.2s; }
-        .option.active { background: var(--accent-color); color: #1a1a2e; transform: scale(1.1); }
+        /* 更加丰富的选择器样式 */
+        .selector-group { margin-bottom: 25px; }
+        .selector-label { font-size: 0.85rem; opacity: 0.5; margin-bottom: 10px; display: block; }
+        .selector { display: flex; gap: 10px; flex-wrap: wrap; }
+        .option { 
+            width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+            border-radius: 12px; background: rgba(255,255,255,0.05); cursor: pointer; transition: 0.2s; 
+        }
+        .option:hover { background: rgba(255,255,255,0.15); }
+        .option.active { background: var(--accent-color); color: #1a1a2e; transform: scale(1.1); box-shadow: 0 4px 15px rgba(168, 218, 220, 0.4); }
 
         .save-btn { background: var(--accent-color); color: #1a1a2e; border: none; padding: 14px 40px; border-radius: 35px; cursor: pointer; font-weight: 600; font-size: 1rem; }
 
@@ -275,19 +220,17 @@
         <div class="diary-list" id="diary-grid"></div>
     </div>
 
-    <!-- 记下一笔 FAB -->
+    <!-- 控制按钮 -->
     <button class="fab-left" onclick="openEditor()">
         <i data-lucide="pen-tool"></i>
         <span>记下一笔</span>
     </button>
 
-    <!-- 音乐切换按钮 -->
     <div class="music-toggle glass" onclick="toggleMusic()" id="music-btn" title="白噪音开关">
         <i data-lucide="volume-x" id="music-icon"></i>
     </div>
 
-    <!-- 背景音乐 (白噪音) -->
-    <audio id="bg-audio" autoplay loop>
+    <audio id="bg-audio" loop>
         <source src="./musics/rain1.mp3" type="audio/mpeg">
     </audio>
 
@@ -299,16 +242,30 @@
         <div class="modal-body glass">
             <input type="text" id="diary-title" placeholder="给今天起个标题...">
             
-            <div style="font-size:0.85rem; opacity:0.5; margin-bottom:10px;">天气与心情</div>
-            <div class="selector" id="weather-sel">
-                <div class="option" data-val="sun"><i data-lucide="sun" style="width:18px;"></i></div>
-                <div class="option" data-val="cloud"><i data-lucide="cloud" style="width:18px;"></i></div>
-                <div class="option active" data-val="rain"><i data-lucide="cloud-rain" style="width:18px;"></i></div>
+            <div class="selector-group">
+                <span class="selector-label">今日天气</span>
+                <div class="selector" id="weather-sel">
+                    <div class="option" data-val="sun" title="晴"><i data-lucide="sun"></i></div>
+                    <div class="option" data-val="cloud" title="多云"><i data-lucide="cloud"></i></div>
+                    <div class="option active" data-val="rain" title="雨"><i data-lucide="cloud-rain"></i></div>
+                    <div class="option" data-val="lightning" title="雷雨"><i data-lucide="cloud-lightning"></i></div>
+                    <div class="option" data-val="snow" title="雪"><i data-lucide="cloud-snow"></i></div>
+                    <div class="option" data-val="wind" title="大风"><i data-lucide="wind"></i></div>
+                    <div class="option" data-val="moon" title="月夜"><i data-lucide="moon"></i></div>
+                </div>
             </div>
-            <div class="selector" id="mood-sel">
-                <div class="option active" data-val="smile"><i data-lucide="smile" style="width:18px;"></i></div>
-                <div class="option" data-val="meh"><i data-lucide="meh" style="width:18px;"></i></div>
-                <div class="option" data-val="frown"><i data-lucide="frown" style="width:18px;"></i></div>
+
+            <div class="selector-group">
+                <span class="selector-label">此刻心情</span>
+                <div class="selector" id="mood-sel">
+                    <div class="option active" data-val="smile" title="开心"><i data-lucide="smile"></i></div>
+                    <div class="option" data-val="heart" title="热爱"><i data-lucide="heart"></i></div>
+                    <div class="option" data-val="zap" title="灵感"><i data-lucide="zap"></i></div>
+                    <div class="option" data-val="coffee" title="惬意"><i data-lucide="coffee"></i></div>
+                    <div class="option" data-val="meh" title="一般"><i data-lucide="meh"></i></div>
+                    <div class="option" data-val="frown" title="低落"><i data-lucide="frown"></i></div>
+                    <div class="option" data-val="angry" title="愤怒"><i data-lucide="angry"></i></div>
+                </div>
             </div>
 
             <textarea id="diary-content" placeholder="此刻在想什么..."></textarea>
@@ -323,7 +280,7 @@
     <script>
         lucide.createIcons();
 
-        // 替换为你的 Supabase 项目 URL 和 anon key
+        // --- Supabase 配置 (保持原样) ---
         const SUPABASE_URL = 'https://fmhiflncdtdfykdmllhc.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtaGlmbG5jZHRkZnlrZG1sbGhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3ODAwNzQsImV4cCI6MjA5MDM1NjA3NH0.LJolOqN0QVlCdfGNhGh7nm7O-4hi8uuwtkUw4yCs5-Q';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -336,54 +293,28 @@
         let isMusicPlaying = false;
 
         async function fetchDiaries() {
-            if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-                alert('请先在代码中配置 SUPABASE_URL 与 SUPABASE_ANON_KEY，无法连接数据库。');
-                return;
-            }
             const { data, error } = await supabaseClient
                 .from('diaries')
                 .select('*')
                 .order('timestamp', { ascending: false });
             if (error) {
-                console.error('从 Supabase 读取日记失败:', error.message);
+                console.error('Fetch error:', error.message);
                 return;
             }
             diaries = data || [];
             renderDiaries();
         }
 
-        // 一键测试 Supabase 连接（在浏览器 Console/弹窗中显示结果）
-        async function testSupabaseConnection() {
-            try {
-                if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-                    alert('SUPABASE_URL 未配置，请在代码中填写你的项目 URL 与 anon key。');
-                    return;
-                }
-                // 尝试读取一条记录以验证连接与权限
-                const res = await supabaseClient.from('diaries').select('id').limit(1);
-                console.log('Supabase test response:', res);
-                if (res.error) {
-                    alert('Supabase 连接失败: ' + (res.error.message || JSON.stringify(res.error)));
-                } else {
-                    alert('Supabase 连接成功（请在控制台查看详细返回）。');
-                }
-            } catch (e) {
-                console.error('Supabase 测试异常：', e);
-                alert('测试时发生异常，请查看控制台：' + (e.message || e));
-            }
-        }
-
-        // 生成带有溅射效果的细腻小雨
+        // 细腻小雨动画
         function createRain() {
             const container = document.getElementById('rain-bg');
             const count = 50; 
             for (let i = 0; i < count; i++) {
                 const rainItem = document.createElement('div');
                 rainItem.className = 'rain-item';
-                const leftPos = Math.random() * 100;
+                rainItem.style.left = Math.random() * 100 + 'vw';
                 const duration = Math.random() * 0.7 + 0.8; 
                 const delay = Math.random() * 5;
-                rainItem.style.left = leftPos + 'vw';
                 const drop = document.createElement('div');
                 drop.className = 'rain-drop';
                 drop.style.animationDuration = duration + 's';
@@ -398,7 +329,6 @@
             }
         }
 
-        // --- 音乐控制逻辑 ---
         function toggleMusic() {
             const audio = document.getElementById('bg-audio');
             const icon = document.getElementById('music-icon');
@@ -406,34 +336,14 @@
                 audio.pause();
                 icon.setAttribute('data-lucide', 'volume-x');
             } else {
-                audio.play().catch(e => console.log("播放被拦截。"));
+                audio.play().catch(() => {});
                 icon.setAttribute('data-lucide', 'volume-2');
             }
             isMusicPlaying = !isMusicPlaying;
             lucide.createIcons();
         }
 
-        // --- 自动播放逻辑 (监听首次交互) ---
-        function initAutoplay() {
-            const startAudio = () => {
-                const audio = document.getElementById('bg-audio');
-                const icon = document.getElementById('music-icon');
-                if (!isMusicPlaying) {
-                    audio.play().then(() => {
-                        isMusicPlaying = true;
-                        icon.setAttribute('data-lucide', 'volume-2');
-                        lucide.createIcons();
-                        // 播放成功后移除监听，避免重复触发
-                        document.removeEventListener('click', startAudio);
-                    }).catch(() => {
-                        // 依然被拦截则不处理
-                    });
-                }
-            };
-            document.addEventListener('click', startAudio);
-        }
-
-        // --- Todo 逻辑 ---
+        // --- Todo 逻辑 (保持原始图标) ---
         function toggleTodo() {
             const el = document.getElementById('todo-sidebar');
             el.classList.toggle('folded');
@@ -448,6 +358,19 @@
             renderTodos();
         }
 
+        function renderTodos() {
+            localStorage.setItem('todos', JSON.stringify(todos));
+            const list = document.getElementById('todo-list');
+            list.innerHTML = todos.map(t => `
+                <div class="todo-item ${t.done ? 'done' : ''}">
+                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodoDone(${t.id})">
+                    <span class="todo-text" contenteditable="true" onblur="editTodo(${t.id}, this.innerText)">${t.text}</span>
+                    <i data-lucide="x" style="width:14px; opacity:0.3; cursor:pointer;" onclick="todos=todos.filter(x=>x.id!==${t.id});renderTodos()"></i>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
         function editTodo(id, newText) {
             todos = todos.map(t => t.id === id ? {...t, text: newText} : t);
             localStorage.setItem('todos', JSON.stringify(todos));
@@ -458,20 +381,7 @@
             renderTodos();
         }
 
-        function renderTodos() {
-            localStorage.setItem('todos', JSON.stringify(todos));
-            const list = document.getElementById('todo-list');
-            list.innerHTML = todos.map(t => `
-                <div class="todo-item ${t.done ? 'done' : ''}">
-                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodoDone(${t.id})">
-                    <span class="todo-text" contenteditable="true" onblur="editTodo(${t.id}, this.innerText)">${t.text}</span>
-                    <i data-lucide="x" style="width:14px; opacity:0.2; cursor:pointer;" onclick="todos=todos.filter(x=>x.id!==${t.id});renderTodos()"></i>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        // --- 日记逻辑 ---
+        // 选择器绑定
         document.querySelectorAll('.option').forEach(opt => {
             opt.onclick = () => {
                 opt.parentElement.querySelectorAll('.option').forEach(o => o.classList.remove('active'));
@@ -493,11 +403,8 @@
                 document.getElementById('diary-content').value = '';
                 curWeather = 'rain'; curMood = 'smile';
             }
-            document.querySelectorAll('.option').forEach(o => {
-                const isMatch = (o.parentElement.id === 'weather-sel' && o.dataset.val === curWeather) || 
-                                (o.parentElement.id === 'mood-sel' && o.dataset.val === curMood);
-                o.classList.toggle('active', isMatch);
-            });
+            document.querySelectorAll('#weather-sel .option').forEach(o => o.classList.toggle('active', o.dataset.val === curWeather));
+            document.querySelectorAll('#mood-sel .option').forEach(o => o.classList.toggle('active', o.dataset.val === curMood));
             document.getElementById('modal').classList.add('active');
         }
 
@@ -513,38 +420,27 @@
                 timestamp: editingId ? diaries.find(x => x.id === editingId).timestamp : now.getTime(),
                 datestr: editingId ? diaries.find(x => x.id === editingId).datestr : now.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', weekday: 'short' })
             };
-            
-            if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-                alert('请先在代码中配置 SUPABASE_URL 与 SUPABASE_ANON_KEY，无法保存到数据库。');
-                return;
-            }
-
             if(editingId) {
-                const { error } = await supabaseClient.from('diaries').update(data).eq('id', editingId);
-                if (error) console.error('更新失败:', error);
+                await supabaseClient.from('diaries').update(data).eq('id', editingId);
             } else {
                 data.id = Date.now();
-                const { error } = await supabaseClient.from('diaries').insert([data]);
-                if (error) console.error('保存失败:', error);
+                await supabaseClient.from('diaries').insert([data]);
             }
-            
             closeEditor();
-            await fetchDiaries();
+            fetchDiaries();
         }
 
         async function deleteDiary(id) {
-            if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-                alert('请先在代码中配置 SUPABASE_URL 与 SUPABASE_ANON_KEY，无法删除数据库内容。');
-                return;
-            }
-            const { error } = await supabaseClient.from('diaries').delete().eq('id', id);
-            if (error) console.error('删除失败:', error);
-            await fetchDiaries();
+            await supabaseClient.from('diaries').delete().eq('id', id);
+            fetchDiaries();
         }
 
         function renderDiaries() {
             const grid = document.getElementById('diary-grid');
-            const icons = { sun:'sun', cloud:'cloud', rain:'cloud-rain', smile:'smile', meh:'meh', frown:'frown' };
+            const iconsMap = { 
+                sun:'sun', cloud:'cloud', rain:'cloud-rain', lightning:'cloud-lightning', snow:'cloud-snow', wind:'wind', moon:'moon',
+                smile:'smile', heart:'heart', zap:'zap', coffee:'coffee', meh:'meh', frown:'frown', angry:'angry'
+            };
             if (diaries.length === 0) {
                 grid.innerHTML = `<div style="text-align:center; padding: 50px; opacity: 0.5;">还没有记下任何记忆...</div>`;
                 return;
@@ -556,9 +452,9 @@
                         <h3>${d.title}</h3>
                     </div>
                     <div class="card-meta">
-                        <i data-lucide="${icons[d.weather] || 'sun'}" style="width:16px;"></i>
-                        <i data-lucide="${icons[d.mood] || 'smile'}" style="width:16px;"></i>
-                        <span style="margin-left: 5px;">${d.datestr || d.dateStr || ''}</span>
+                        <i data-lucide="${iconsMap[d.weather] || 'cloud-rain'}" style="width:16px;"></i>
+                        <i data-lucide="${iconsMap[d.mood] || 'smile'}" style="width:16px;"></i>
+                        <span style="margin-left: 5px;">${d.datestr || ''}</span>
                     </div>
                     <p>${d.content}</p>
                 </div>
@@ -569,7 +465,6 @@
         window.onload = () => {
             createRain(); 
             renderTodos(); 
-            initAutoplay();
             fetchDiaries();
             document.getElementById('date-text').innerText = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
         }
