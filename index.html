@@ -24,6 +24,7 @@
             font-family: 'Noto Sans SC', sans-serif;
             color: var(--text-color);
             overflow: hidden;
+            background: #1a1c2c;
         }
 
         /* --- 水波纹特效样式 --- */
@@ -138,6 +139,12 @@
         .fab-left span { display: none; margin-left: 10px; font-weight: 600; white-space: nowrap; }
         .fab-left:hover span { display: inline; }
 
+        .music-toggle {
+            position: fixed; bottom: 35px; right: 35px; width: 50px; height: 50px; border-radius: 25px;
+            display: flex; align-items: center; justify-content: center; z-index: 100; transition: 0.3s;
+            cursor: pointer;
+        }
+
         .selector { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 25px; }
         .option { 
             width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;
@@ -145,9 +152,8 @@
         }
         .option.active { background: var(--accent-color); color: #1a1a2e; transform: scale(1.1); }
 
-        .delete-btn { position: absolute; top: 25px; right: 25px; color: #ff6b6b; opacity: 0; transition: 0.3s; padding: 5px; cursor: pointer; }
-        .diary-card:hover .delete-btn { opacity: 0.6; }
-        .delete-btn:hover { opacity: 1 !important; transform: scale(1.1); }
+        /* 隐藏删除按钮 */
+        .delete-btn { display: none !important; }
 
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
@@ -188,7 +194,7 @@
         <span>写日记</span>
     </button>
 
-    <div class="music-toggle glass" onclick="toggleMusic()" style="position: fixed; bottom: 35px; right: 35px; width: 50px; height: 50px; border-radius: 25px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+    <div class="music-toggle glass" onclick="toggleMusic()" style="position: fixed; bottom: 35px; right: 35px; width: 50px; height: 50px; border-radius: 25px; display: flex; align-items: center; justify-content: center;">
         <i data-lucide="volume-x" id="music-icon"></i>
     </div>
 
@@ -204,6 +210,8 @@
     <div class="modal" id="modal">
         <div class="modal-body glass">
             <input type="text" id="diary-title" placeholder="起个诗意的标题...">
+            
+            <div id="edit-notice" style="font-size: 0.8rem; color: var(--accent-color); margin-bottom: 10px; display: none; opacity: 0.7;">管理模式：当前仅供预览</div>
             
             <div style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 10px;">天气与心情</div>
             <div class="selector" id="weather-sel">
@@ -228,7 +236,7 @@
             
             <div style="display:flex; justify-content:flex-end; gap:20px; align-items:center; margin-top: 30px;">
                 <button onclick="closeEditor()" style="background:none; border:none; color:white; opacity:0.5; cursor:pointer;">取消</button>
-                <button class="save-btn glass" onclick="saveDiary()" style="background: var(--accent-color); color: #1a1a2e; border: none; padding: 12px 35px; border-radius: 30px; font-weight: 600; cursor: pointer;">镌刻这段记忆</button>
+                <button id="save-diary-btn" class="save-btn glass" onclick="saveDiary()" style="background: var(--accent-color); color: #1a1a2e; border: none; padding: 12px 35px; border-radius: 30px; font-weight: 600; cursor: pointer;">镌刻这段记忆</button>
             </div>
         </div>
     </div>
@@ -249,15 +257,13 @@
             placeholder: '写下此刻的所思所想...'
         });
 
-        // --- 水波纹特效系统 ---
+        // --- 水波纹特效 ---
         window.addEventListener('mousedown', (e) => {
             const ripple = document.createElement('div');
             ripple.className = 'ripple';
             ripple.style.left = e.clientX + 'px';
             ripple.style.top = e.clientY + 'px';
             document.body.appendChild(ripple);
-            
-            // 动画结束后自动移除元素
             ripple.addEventListener('animationend', () => ripple.remove());
         });
 
@@ -283,7 +289,6 @@
             renderDiaries();
         }
 
-        // --- 优化后的雨滴生成逻辑 (随机初始高度) ---
         function createRain() {
             const container = document.getElementById('rain-bg');
             container.innerHTML = ''; 
@@ -293,38 +298,53 @@
                 drop.className = 'rain-drop';
                 drop.style.left = Math.random() * 100 + 'vw';
                 drop.style.height = Math.random() * 40 + 30 + 'px';
-                
-                // 设置随机持续时间
                 const duration = Math.random() * 0.6 + 0.6;
                 drop.style.animationDuration = duration + 's';
-                
-                // 关键点：使用负的延迟值 (negative delay) 
-                // 这会让动画在页面加载时已经处于“进行中”状态，从而随机分布在屏幕各处
                 const delay = Math.random() * -5; 
                 drop.style.animationDelay = delay + 's';
-                
                 container.appendChild(drop);
             }
         }
 
+        // 修改编辑器打开逻辑：禁止编辑已有日记
         function openEditor(id = null) {
             editingId = id;
+            const saveBtn = document.getElementById('save-diary-btn');
+            const notice = document.getElementById('edit-notice');
+            const titleInput = document.getElementById('diary-title');
+
             if(id) {
+                // 编辑模式 -> 设为只读
                 const d = diaries.find(x => x.id === id);
-                document.getElementById('diary-title').value = d.title;
-                quill.root.innerHTML = d.content; 
+                titleInput.value = d.title;
+                titleInput.readOnly = true;
+                quill.root.innerHTML = d.content;
+                quill.enable(false); // 禁止富文本编辑
                 curWeather = d.weather; curMood = d.mood;
+                
+                saveBtn.style.display = 'none'; // 隐藏保存按钮
+                notice.style.display = 'block'; // 显示预览提示
             } else {
-                document.getElementById('diary-title').value = '';
+                // 新建模式 -> 允许编辑
+                titleInput.value = '';
+                titleInput.readOnly = false;
                 quill.setText(''); 
+                quill.enable(true);
                 curWeather = 'rain'; curMood = 'smile';
+                
+                saveBtn.style.display = 'block';
+                notice.style.display = 'none';
             }
+            
             document.querySelectorAll('#weather-sel .option').forEach(o => o.classList.toggle('active', o.dataset.val === curWeather));
             document.querySelectorAll('#mood-sel .option').forEach(o => o.classList.toggle('active', o.dataset.val === curMood));
             document.getElementById('modal').classList.add('active');
         }
 
         async function saveDiary() {
+            // 如果是编辑模式，该函数不会被保存按钮触发，但做个双重检查
+            if (editingId) return;
+
             const content = quill.root.innerHTML;
             if(quill.getText().trim().length === 0) return;
             
@@ -334,16 +354,13 @@
                 content, 
                 weather: curWeather, 
                 mood: curMood,
-                timestamp: editingId ? diaries.find(x => x.id === editingId).timestamp : now.getTime(),
-                datestr: editingId ? diaries.find(x => x.id === editingId).datestr : now.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', weekday: 'short' })
+                timestamp: now.getTime(),
+                datestr: now.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', weekday: 'short' })
             };
 
-            if(editingId) {
-                await supabaseClient.from('diaries').update(data).eq('id', editingId);
-            } else {
-                data.id = Date.now();
-                await supabaseClient.from('diaries').insert([data]);
-            }
+            data.id = Date.now();
+            await supabaseClient.from('diaries').insert([data]);
+            
             closeEditor();
             fetchDiaries();
         }
@@ -354,7 +371,6 @@
             
             grid.innerHTML = diaries.map(d => `
                 <div class="diary-card glass" onclick="openEditor(${d.id})">
-                    <i data-lucide="trash-2" class="delete-btn" onclick="event.stopPropagation(); deleteDiary(${d.id});"></i>
                     <h3 style="font-size: 1.3rem; margin-bottom: 10px;">${d.title}</h3>
                     <div class="card-meta">
                         <i data-lucide="${iconsMap[d.weather] || 'cloud-rain'}" style="width:14px;"></i>
@@ -367,7 +383,6 @@
             lucide.createIcons();
         }
 
-        // --- 便签功能 ---
         function toggleTodo() {
             document.getElementById('todo-sidebar').classList.toggle('folded');
             document.getElementById('fold-icon').style.transform = document.getElementById('todo-sidebar').classList.contains('folded') ? 'rotate(180deg)' : 'rotate(0)';
@@ -399,7 +414,6 @@
             renderTodos();
         }
 
-        // --- 音乐控制 ---
         function toggleMusic() {
             const audio = document.getElementById('bg-audio');
             const icon = document.getElementById('music-icon');
@@ -410,11 +424,11 @@
         }
 
         function closeEditor() { document.getElementById('modal').classList.remove('active'); }
-        async function deleteDiary(id) { await supabaseClient.from('diaries').delete().eq('id', id); fetchDiaries(); }
 
-        // 选择器交互
         document.querySelectorAll('.option').forEach(opt => {
             opt.addEventListener('click', () => {
+                // 如果是编辑已有日记，点击天气/心情图标无效
+                if (editingId) return;
                 opt.parentElement.querySelectorAll('.option').forEach(o => o.classList.remove('active'));
                 opt.classList.add('active');
                 if(opt.parentElement.id === 'weather-sel') curWeather = opt.dataset.val;
