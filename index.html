@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>治愈雨季 | 沉浸式日记空间</title>
-    <!-- 引入书法字体与标准字体 -->
+    <!-- 引入字体与核心库 -->
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+    <!-- Quill 富文本编辑器样式 -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
@@ -24,209 +26,169 @@
             overflow: hidden;
         }
 
-        /* 固定的背景图层 */
-        .bg-layer {
+        /* --- 水波纹特效样式 --- */
+        .ripple {
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-image: url('./imgs/wallpaper.png');
-            background-size: cover;
-            background-position: center;
-            z-index: -2;
-        }
-
-        /* 兜底背景 */
-        .bg-fallback {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: #1a1c2c;
-            z-index: -3;
-        }
-
-        /* 加深遮罩 */
-        .overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5); 
-            z-index: -1;
-        }
-
-        /* 动态小雨 */
-        .rain-container {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--accent-color);
+            background: rgba(168, 218, 220, 0.1);
+            transform: translate(-50%, -50%);
             pointer-events: none;
-            z-index: 0;
+            z-index: 9999;
+            animation: ripple-out 0.8s ease-out forwards;
         }
 
-        .rain-item { position: absolute; top: 0; height: 100%; }
-        .rain-drop {
-            position: absolute;
-            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.6));
-            width: 1px; height: 50px; top: -100px;
-            animation: fall linear infinite;
+        @keyframes ripple-out {
+            from { width: 0; height: 0; opacity: 0.8; border-width: 3px; }
+            to { width: 150px; height: 150px; opacity: 0; border-width: 1px; }
         }
-        .rain-splash {
-            position: absolute; bottom: 0; left: -5px; width: 12px; height: 4px;
-            border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.2);
-            transform: scale(0); opacity: 0; animation: splash-ring linear infinite;
+
+        /* 背景层 */
+        .bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('./imgs/wallpaper.png');
+            background-size: cover; background-position: center; z-index: -2;
+        }
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5); z-index: -1;
+        }
+        .rain-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+        
+        /* 雨滴样式 */
+        .rain-drop {
+            position: absolute; 
+            background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.6));
+            width: 1px; 
+            animation: fall linear infinite;
         }
 
         @keyframes fall {
-            0% { transform: translateY(-100px); opacity: 0; }
-            10% { opacity: 0.6; }
+            0% { transform: translateY(-120px); opacity: 0; }
+            20% { opacity: 0.6; }
             90% { opacity: 0.6; }
-            100% { transform: translateY(100vh); opacity: 0; }
-        }
-        @keyframes splash-ring {
-            0%, 94% { transform: scale(0); opacity: 0; }
-            95% { transform: scale(0.5); opacity: 0.4; }
-            100% { transform: scale(1.5); opacity: 0; }
+            100% { transform: translateY(105vh); opacity: 0; }
         }
 
-        /* 玻璃拟态 */
         .glass {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border);
-            border-radius: 20px;
+            border-radius: 24px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
 
-        /* --- Todo 栏 (保持原样图标) --- */
-        .todo-panel {
-            position: fixed;
-            top: 25px; right: 25px;
-            width: 280px; z-index: 9999;
-            padding: 20px;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .todo-panel.folded { width: 50px; height: 50px; padding: 0; border-radius: 25px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .todo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .todo-panel.folded .todo-header, .todo-panel.folded .todo-content { display: none; }
-        
-        .todo-item { display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; font-size: 0.9rem; }
-        .todo-item input[type="checkbox"] { margin-top: 4px; cursor: pointer; }
-        .todo-text { flex: 1; word-break: break-all; outline: none; }
-        .todo-item.done .todo-text { text-decoration: line-through; opacity: 0.5; }
-
-        /* 居中日记区 */
+        /* 内容区布局 */
         .main-container {
             position: relative; z-index: 10; max-width: 800px; margin: 0 auto;
             padding: 40px 20px; height: 100vh; display: flex; flex-direction: column;
         }
 
-        .header { text-align: center; margin-bottom: 50px; }
         .header h1 {
-            font-family: 'Ma Shan Zheng', cursive;
-            font-size: clamp(2.5rem, 8vw, 4.5rem);
-            margin-bottom: 15px;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.6);
-            letter-spacing: 5px;
+            font-family: 'Ma Shan Zheng', cursive; text-align: center;
+            font-size: clamp(2.5rem, 8vw, 4.2rem); margin-bottom: 40px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.6); letter-spacing: 5px;
         }
 
-        .diary-list {
-            flex: 1; display: flex; flex-direction: column; gap: 25px; overflow-y: auto; padding: 10px 10px 120px 10px;
+        .diary-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 25px; padding-bottom: 100px; }
+        .diary-card { padding: 30px; position: relative; transition: transform 0.3s ease; }
+        .diary-card:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.12); }
+        .card-meta { display: flex; gap: 12px; margin-bottom: 15px; font-size: 0.8rem; opacity: 0.6; align-items: center; }
+        
+        .diary-preview-content { font-size: 1rem; line-height: 1.8; opacity: 0.9; max-height: 120px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
+        .diary-preview-content blockquote { border-left: 3px solid var(--accent-color); padding-left: 10px; margin: 10px 0; font-style: italic; opacity: 0.8; }
+
+        /* --- Quill 编辑器样式重写 --- */
+        .ql-container.ql-snow { border: none !important; font-size: 1.1rem; font-family: inherit; color: white; }
+        .ql-toolbar.ql-snow { 
+            border: none !important; border-bottom: 1px solid var(--glass-border) !important; 
+            background: rgba(255,255,255,0.05); border-radius: 12px 12px 0 0;
+        }
+        .ql-snow .ql-stroke { stroke: rgba(255,255,255,0.6) !important; }
+        .ql-snow .ql-fill { fill: rgba(255,255,255,0.6) !important; }
+        .ql-snow .ql-picker { color: rgba(255,255,255,0.6) !important; }
+        #editor-container { height: 350px; background: rgba(255,255,255,0.02); border-radius: 0 0 12px 12px; }
+
+        /* 模态框样式 */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 2000;
+        }
+        .modal.active { display: flex; }
+        .modal-body { width: 95%; max-width: 850px; padding: 40px; max-height: 95vh; overflow-y: auto; }
+        .modal-body input#diary-title { 
+            width: 100%; background: none; border: none; color: white; outline: none;
+            font-family: 'Ma Shan Zheng', cursive; font-size: 2.5rem; border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 10px; margin-bottom: 30px;
         }
 
-        .diary-card {
-            padding: 30px; min-height: 180px; display: flex; flex-direction: column; cursor: pointer;
-            transition: transform 0.3s ease, background 0.3s ease; position: relative; width: 100%;
+        .todo-panel {
+            position: fixed; top: 25px; right: 25px; width: 280px; z-index: 1000; padding: 20px;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .diary-card:hover { transform: scale(1.015); background: rgba(255, 255, 255, 0.12); }
-        .card-meta { display: flex; gap: 15px; margin-bottom: 15px; font-size: 0.85rem; opacity: 0.6; align-items: center; }
-        .diary-card p { font-size: 1rem; opacity: 0.85; line-height: 1.8; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-        .delete-btn { position: absolute; top: 25px; right: 25px; color: #ff6b6b; opacity: 0; transition: 0.2s; padding: 5px; }
-        .diary-card:hover .delete-btn { opacity: 1; }
+        .todo-panel.folded { width: 50px; height: 50px; padding: 0; border-radius: 25px; cursor: pointer; }
 
-        /* 控制按钮 */
         .fab-left {
-            position: fixed; bottom: 35px; left: 35px;
-            background: var(--accent-color); color: #1a1a2e;
-            border: none; width: 65px; height: 65px; border-radius: 35px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            position: fixed; bottom: 35px; left: 35px; background: var(--accent-color); color: #1a1a2e;
+            border: none; width: 65px; height: 65px; border-radius: 35px; display: flex; align-items: center; justify-content: center;
+            z-index: 100; box-shadow: 0 10px 25px rgba(0,0,0,0.5); cursor: pointer; transition: 0.3s;
         }
         .fab-left:hover { width: 160px; }
         .fab-left span { display: none; margin-left: 10px; font-weight: 600; white-space: nowrap; }
         .fab-left:hover span { display: inline; }
 
-        .music-toggle {
-            position: fixed; bottom: 35px; right: 35px; width: 50px; height: 50px; border-radius: 25px;
-            display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; transition: 0.3s;
-        }
-
-        /* 编辑器模态框 */
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); display: none;
-            align-items: center; justify-content: center; z-index: 200;
-        }
-        .modal.active { display: flex; }
-        .modal-body { width: 90%; max-width: 750px; padding: 40px; max-height: 90vh; overflow-y: auto; }
-        .modal-body input, .modal-body textarea { width: 100%; background: none; border: none; color: white; outline: none; }
-        .modal-body input { font-family: 'Ma Shan Zheng', cursive; font-size: 2.2rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; margin-bottom: 25px; }
-        .modal-body textarea { height: 200px; resize: none; font-size: 1.1rem; line-height: 1.8; margin-top: 15px; }
-
-        /* 更加丰富的选择器样式 */
-        .selector-group { margin-bottom: 25px; }
-        .selector-label { font-size: 0.85rem; opacity: 0.5; margin-bottom: 10px; display: block; }
-        .selector { display: flex; gap: 10px; flex-wrap: wrap; }
+        .selector { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 25px; }
         .option { 
-            width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
-            border-radius: 12px; background: rgba(255,255,255,0.05); cursor: pointer; transition: 0.2s; 
+            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;
+            border-radius: 12px; background: rgba(255,255,255,0.05); cursor: pointer; transition: 0.2s;
         }
-        .option:hover { background: rgba(255,255,255,0.15); }
-        .option.active { background: var(--accent-color); color: #1a1a2e; transform: scale(1.1); box-shadow: 0 4px 15px rgba(168, 218, 220, 0.4); }
+        .option.active { background: var(--accent-color); color: #1a1a2e; transform: scale(1.1); }
 
-        .save-btn { background: var(--accent-color); color: #1a1a2e; border: none; padding: 14px 40px; border-radius: 35px; cursor: pointer; font-weight: 600; font-size: 1rem; }
+        .delete-btn { position: absolute; top: 25px; right: 25px; color: #ff6b6b; opacity: 0; transition: 0.3s; padding: 5px; cursor: pointer; }
+        .diary-card:hover .delete-btn { opacity: 0.6; }
+        .delete-btn:hover { opacity: 1 !important; transform: scale(1.1); }
 
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="bg-fallback"></div>
     <div class="bg-layer"></div>
     <div class="overlay"></div>
     <div class="rain-container" id="rain-bg"></div>
 
     <!-- 右上角 Todo -->
     <aside class="todo-panel glass" id="todo-sidebar" onclick="if(this.classList.contains('folded')) toggleTodo()">
-        <div class="todo-header">
-            <h3 style="font-size: 1rem; font-weight: 400; opacity: 0.8;">今日便签</h3>
+        <div class="todo-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="font-size: 0.9rem; opacity: 0.8; font-weight: 400;">今日便签</h3>
             <button onclick="event.stopPropagation(); toggleTodo()" style="background:none; border:none; color:white; cursor:pointer;">
                 <i data-lucide="chevron-right" id="fold-icon"></i>
             </button>
         </div>
         <div class="todo-content">
-            <input type="text" id="todo-input" placeholder="输入并回车..." style="width:100%; background:rgba(255,255,255,0.05); border:none; padding:10px; color:white; border-radius:10px; outline:none; font-size:0.85rem;" onkeypress="if(event.key==='Enter') addTodo()">
-            <div id="todo-list" style="max-height: 250px; overflow-y: auto; margin-top: 10px;"></div>
+            <input type="text" id="todo-input" placeholder="回车添加..." style="width:100%; background:rgba(255,255,255,0.05); border:none; padding:10px; color:white; border-radius:10px; outline:none;" onkeypress="if(event.key==='Enter') addTodo()">
+            <div id="todo-list" style="max-height: 200px; overflow-y: auto; margin-top: 10px;"></div>
         </div>
     </aside>
 
-    <!-- 居中日记区 -->
+    <!-- 居中区 -->
     <div class="main-container">
         <header class="header">
             <h1>听雨落的声音</h1>
-            <p id="date-text" style="opacity: 0.5; letter-spacing: 3px; font-size: 0.9rem;"></p>
+            <p id="date-text" style="text-align: center; opacity: 0.5; font-size: 0.9rem; letter-spacing: 2px;"></p>
         </header>
         <div class="diary-list" id="diary-grid"></div>
     </div>
 
-    <!-- 控制按钮 -->
+    <!-- 控制 -->
     <button class="fab-left" onclick="openEditor()">
         <i data-lucide="pen-tool"></i>
-        <span>记下一笔</span>
+        <span>写日记</span>
     </button>
 
-    <div class="music-toggle glass" onclick="toggleMusic()" id="music-btn" title="白噪音开关">
+    <div class="music-toggle glass" onclick="toggleMusic()" style="position: fixed; bottom: 35px; right: 35px; width: 50px; height: 50px; border-radius: 25px; display: flex; align-items: center; justify-content: center; cursor: pointer;">
         <i data-lucide="volume-x" id="music-icon"></i>
     </div>
 
@@ -234,120 +196,181 @@
         <source src="./musics/rain1.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- 引入 Supabase -->
+    <!-- 外部库 -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- 编辑器 -->
+    <!-- 编辑器模态框 -->
     <div class="modal" id="modal">
         <div class="modal-body glass">
-            <input type="text" id="diary-title" placeholder="给今天起个标题...">
+            <input type="text" id="diary-title" placeholder="起个诗意的标题...">
             
-            <div class="selector-group">
-                <span class="selector-label">今日天气</span>
-                <div class="selector" id="weather-sel">
-                    <div class="option" data-val="sun" title="晴"><i data-lucide="sun"></i></div>
-                    <div class="option" data-val="cloud" title="多云"><i data-lucide="cloud"></i></div>
-                    <div class="option active" data-val="rain" title="雨"><i data-lucide="cloud-rain"></i></div>
-                    <div class="option" data-val="lightning" title="雷雨"><i data-lucide="cloud-lightning"></i></div>
-                    <div class="option" data-val="snow" title="雪"><i data-lucide="cloud-snow"></i></div>
-                    <div class="option" data-val="wind" title="大风"><i data-lucide="wind"></i></div>
-                    <div class="option" data-val="moon" title="月夜"><i data-lucide="moon"></i></div>
-                </div>
+            <div style="font-size: 0.8rem; opacity: 0.5; margin-bottom: 10px;">天气与心情</div>
+            <div class="selector" id="weather-sel">
+                <div class="option" data-val="sun" title="晴"><i data-lucide="sun"></i></div>
+                <div class="option" data-val="cloud" title="多云"><i data-lucide="cloud"></i></div>
+                <div class="option active" data-val="rain" title="雨"><i data-lucide="cloud-rain"></i></div>
+                <div class="option" data-val="lightning" title="雷雨"><i data-lucide="cloud-lightning"></i></div>
+                <div class="option" data-val="snow" title="雪"><i data-lucide="cloud-snow"></i></div>
+                <div class="option" data-val="moon" title="星夜"><i data-lucide="moon"></i></div>
             </div>
 
-            <div class="selector-group">
-                <span class="selector-label">此刻心情</span>
-                <div class="selector" id="mood-sel">
-                    <div class="option active" data-val="smile" title="开心"><i data-lucide="smile"></i></div>
-                    <div class="option" data-val="heart" title="热爱"><i data-lucide="heart"></i></div>
-                    <div class="option" data-val="zap" title="灵感"><i data-lucide="zap"></i></div>
-                    <div class="option" data-val="coffee" title="惬意"><i data-lucide="coffee"></i></div>
-                    <div class="option" data-val="meh" title="一般"><i data-lucide="meh"></i></div>
-                    <div class="option" data-val="frown" title="低落"><i data-lucide="frown"></i></div>
-                    <div class="option" data-val="angry" title="愤怒"><i data-lucide="angry"></i></div>
-                </div>
+            <div class="selector" id="mood-sel">
+                <div class="option active" data-val="smile" title="欢愉"><i data-lucide="smile"></i></div>
+                <div class="option" data-val="heart" title="热爱"><i data-lucide="heart"></i></div>
+                <div class="option" data-val="coffee" title="恬静"><i data-lucide="coffee"></i></div>
+                <div class="option" data-val="zap" title="触动"><i data-lucide="zap"></i></div>
+                <div class="option" data-val="frown" title="微凉"><i data-lucide="frown"></i></div>
             </div>
 
-            <textarea id="diary-content" placeholder="此刻在想什么..."></textarea>
+            <!-- 富文本容器 -->
+            <div id="editor-container"></div>
             
-            <div style="display:flex; justify-content:flex-end; gap:25px; align-items:center;">
-                <button onclick="closeEditor()" style="background:none; border:none; color:white; opacity:0.5; cursor:pointer; font-size: 0.9rem;">取消</button>
-                <button class="save-btn" onclick="saveDiary()">保存记忆</button>
+            <div style="display:flex; justify-content:flex-end; gap:20px; align-items:center; margin-top: 30px;">
+                <button onclick="closeEditor()" style="background:none; border:none; color:white; opacity:0.5; cursor:pointer;">取消</button>
+                <button class="save-btn glass" onclick="saveDiary()" style="background: var(--accent-color); color: #1a1a2e; border: none; padding: 12px 35px; border-radius: 30px; font-weight: 600; cursor: pointer;">镌刻这段记忆</button>
             </div>
         </div>
     </div>
 
     <script>
-        lucide.createIcons();
+        // --- 初始化 Quill 富文本编辑器 ---
+        const quill = new Quill('#editor-container', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ 'header': 1 }, { 'header': 2 }],
+                    ['blockquote', 'code-block'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['clean']
+                ]
+            },
+            placeholder: '写下此刻的所思所想...'
+        });
 
-        // --- Supabase 配置 (保持原样) ---
+        // --- 水波纹特效系统 ---
+        window.addEventListener('mousedown', (e) => {
+            const ripple = document.createElement('div');
+            ripple.className = 'ripple';
+            ripple.style.left = e.clientX + 'px';
+            ripple.style.top = e.clientY + 'px';
+            document.body.appendChild(ripple);
+            
+            // 动画结束后自动移除元素
+            ripple.addEventListener('animationend', () => ripple.remove());
+        });
+
+        // --- 核心业务与数据库 ---
         const SUPABASE_URL = 'https://fmhiflncdtdfykdmllhc.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtaGlmbG5jZHRkZnlrZG1sbGhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3ODAwNzQsImV4cCI6MjA5MDM1NjA3NH0.LJolOqN0QVlCdfGNhGh7nm7O-4hi8uuwtkUw4yCs5-Q';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let diaries = [];
-        let todos = JSON.parse(localStorage.getItem('todos')) || [];
         let editingId = null;
         let curWeather = 'rain';
         let curMood = 'smile';
         let isMusicPlaying = false;
+        let todos = JSON.parse(localStorage.getItem('todos')) || [];
 
         async function fetchDiaries() {
             const { data, error } = await supabaseClient
                 .from('diaries')
                 .select('*')
                 .order('timestamp', { ascending: false });
-            if (error) {
-                console.error('Fetch error:', error.message);
-                return;
-            }
+            if (error) return;
             diaries = data || [];
             renderDiaries();
         }
 
-        // 细腻小雨动画
+        // --- 优化后的雨滴生成逻辑 (随机初始高度) ---
         function createRain() {
             const container = document.getElementById('rain-bg');
-            const count = 50; 
+            container.innerHTML = ''; 
+            const count = 65; 
             for (let i = 0; i < count; i++) {
-                const rainItem = document.createElement('div');
-                rainItem.className = 'rain-item';
-                rainItem.style.left = Math.random() * 100 + 'vw';
-                const duration = Math.random() * 0.7 + 0.8; 
-                const delay = Math.random() * 5;
                 const drop = document.createElement('div');
                 drop.className = 'rain-drop';
+                drop.style.left = Math.random() * 100 + 'vw';
+                drop.style.height = Math.random() * 40 + 30 + 'px';
+                
+                // 设置随机持续时间
+                const duration = Math.random() * 0.6 + 0.6;
                 drop.style.animationDuration = duration + 's';
+                
+                // 关键点：使用负的延迟值 (negative delay) 
+                // 这会让动画在页面加载时已经处于“进行中”状态，从而随机分布在屏幕各处
+                const delay = Math.random() * -5; 
                 drop.style.animationDelay = delay + 's';
-                const splash = document.createElement('div');
-                splash.className = 'rain-splash';
-                splash.style.animationDuration = duration + 's';
-                splash.style.animationDelay = delay + 's';
-                rainItem.appendChild(drop);
-                rainItem.appendChild(splash);
-                container.appendChild(rainItem);
+                
+                container.appendChild(drop);
             }
         }
 
-        function toggleMusic() {
-            const audio = document.getElementById('bg-audio');
-            const icon = document.getElementById('music-icon');
-            if (isMusicPlaying) {
-                audio.pause();
-                icon.setAttribute('data-lucide', 'volume-x');
+        function openEditor(id = null) {
+            editingId = id;
+            if(id) {
+                const d = diaries.find(x => x.id === id);
+                document.getElementById('diary-title').value = d.title;
+                quill.root.innerHTML = d.content; 
+                curWeather = d.weather; curMood = d.mood;
             } else {
-                audio.play().catch(() => {});
-                icon.setAttribute('data-lucide', 'volume-2');
+                document.getElementById('diary-title').value = '';
+                quill.setText(''); 
+                curWeather = 'rain'; curMood = 'smile';
             }
-            isMusicPlaying = !isMusicPlaying;
+            document.querySelectorAll('#weather-sel .option').forEach(o => o.classList.toggle('active', o.dataset.val === curWeather));
+            document.querySelectorAll('#mood-sel .option').forEach(o => o.classList.toggle('active', o.dataset.val === curMood));
+            document.getElementById('modal').classList.add('active');
+        }
+
+        async function saveDiary() {
+            const content = quill.root.innerHTML;
+            if(quill.getText().trim().length === 0) return;
+            
+            const now = new Date();
+            const data = {
+                title: document.getElementById('diary-title').value || '无题的瞬间',
+                content, 
+                weather: curWeather, 
+                mood: curMood,
+                timestamp: editingId ? diaries.find(x => x.id === editingId).timestamp : now.getTime(),
+                datestr: editingId ? diaries.find(x => x.id === editingId).datestr : now.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', weekday: 'short' })
+            };
+
+            if(editingId) {
+                await supabaseClient.from('diaries').update(data).eq('id', editingId);
+            } else {
+                data.id = Date.now();
+                await supabaseClient.from('diaries').insert([data]);
+            }
+            closeEditor();
+            fetchDiaries();
+        }
+
+        function renderDiaries() {
+            const grid = document.getElementById('diary-grid');
+            const iconsMap = { sun:'sun', cloud:'cloud', rain:'cloud-rain', lightning:'cloud-lightning', snow:'cloud-snow', moon:'moon', smile:'smile', heart:'heart', coffee:'coffee', zap:'zap', frown:'frown' };
+            
+            grid.innerHTML = diaries.map(d => `
+                <div class="diary-card glass" onclick="openEditor(${d.id})">
+                    <i data-lucide="trash-2" class="delete-btn" onclick="event.stopPropagation(); deleteDiary(${d.id});"></i>
+                    <h3 style="font-size: 1.3rem; margin-bottom: 10px;">${d.title}</h3>
+                    <div class="card-meta">
+                        <i data-lucide="${iconsMap[d.weather] || 'cloud-rain'}" style="width:14px;"></i>
+                        <i data-lucide="${iconsMap[d.mood] || 'smile'}" style="width:14px;"></i>
+                        <span>${d.datestr || ''}</span>
+                    </div>
+                    <div class="diary-preview-content ql-editor" style="padding:0;">${d.content}</div>
+                </div>
+            `).join('');
             lucide.createIcons();
         }
 
-        // --- Todo 逻辑 (保持原始图标) ---
+        // --- 便签功能 ---
         function toggleTodo() {
-            const el = document.getElementById('todo-sidebar');
-            el.classList.toggle('folded');
-            document.getElementById('fold-icon').style.transform = el.classList.contains('folded') ? 'rotate(180deg)' : 'rotate(0)';
+            document.getElementById('todo-sidebar').classList.toggle('folded');
+            document.getElementById('fold-icon').style.transform = document.getElementById('todo-sidebar').classList.contains('folded') ? 'rotate(180deg)' : 'rotate(0)';
         }
 
         function addTodo() {
@@ -362,18 +385,13 @@
             localStorage.setItem('todos', JSON.stringify(todos));
             const list = document.getElementById('todo-list');
             list.innerHTML = todos.map(t => `
-                <div class="todo-item ${t.done ? 'done' : ''}">
-                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodoDone(${t.id})">
-                    <span class="todo-text" contenteditable="true" onblur="editTodo(${t.id}, this.innerText)">${t.text}</span>
+                <div class="todo-item ${t.done ? 'done' : ''}" style="display: flex; align-items: flex-start; gap: 10px; margin-top: 12px; font-size: 0.9rem;">
+                    <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleTodoDone(${t.id})" style="margin-top: 4px; cursor: pointer;">
+                    <span class="todo-text" style="flex: 1; word-break: break-all; outline: none; ${t.done ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${t.text}</span>
                     <i data-lucide="x" style="width:14px; opacity:0.3; cursor:pointer;" onclick="todos=todos.filter(x=>x.id!==${t.id});renderTodos()"></i>
                 </div>
             `).join('');
             lucide.createIcons();
-        }
-
-        function editTodo(id, newText) {
-            todos = todos.map(t => t.id === id ? {...t, text: newText} : t);
-            localStorage.setItem('todos', JSON.stringify(todos));
         }
 
         function toggleTodoDone(id) {
@@ -381,91 +399,34 @@
             renderTodos();
         }
 
-        // 选择器绑定
+        // --- 音乐控制 ---
+        function toggleMusic() {
+            const audio = document.getElementById('bg-audio');
+            const icon = document.getElementById('music-icon');
+            if (isMusicPlaying) { audio.pause(); icon.setAttribute('data-lucide', 'volume-x'); }
+            else { audio.play().catch(()=>{}); icon.setAttribute('data-lucide', 'volume-2'); }
+            isMusicPlaying = !isMusicPlaying;
+            lucide.createIcons();
+        }
+
+        function closeEditor() { document.getElementById('modal').classList.remove('active'); }
+        async function deleteDiary(id) { await supabaseClient.from('diaries').delete().eq('id', id); fetchDiaries(); }
+
+        // 选择器交互
         document.querySelectorAll('.option').forEach(opt => {
-            opt.onclick = () => {
+            opt.addEventListener('click', () => {
                 opt.parentElement.querySelectorAll('.option').forEach(o => o.classList.remove('active'));
                 opt.classList.add('active');
                 if(opt.parentElement.id === 'weather-sel') curWeather = opt.dataset.val;
                 else curMood = opt.dataset.val;
-            };
+            });
         });
 
-        function openEditor(id = null) {
-            editingId = id;
-            if(id) {
-                const d = diaries.find(x => x.id === id);
-                document.getElementById('diary-title').value = d.title;
-                document.getElementById('diary-content').value = d.content;
-                curWeather = d.weather; curMood = d.mood;
-            } else {
-                document.getElementById('diary-title').value = '';
-                document.getElementById('diary-content').value = '';
-                curWeather = 'rain'; curMood = 'smile';
-            }
-            document.querySelectorAll('#weather-sel .option').forEach(o => o.classList.toggle('active', o.dataset.val === curWeather));
-            document.querySelectorAll('#mood-sel .option').forEach(o => o.classList.toggle('active', o.dataset.val === curMood));
-            document.getElementById('modal').classList.add('active');
-        }
-
-        function closeEditor() { document.getElementById('modal').classList.remove('active'); }
-
-        async function saveDiary() {
-            const content = document.getElementById('diary-content').value.trim();
-            if(!content) return;
-            const now = new Date();
-            const data = {
-                title: document.getElementById('diary-title').value || '无题',
-                content, weather: curWeather, mood: curMood,
-                timestamp: editingId ? diaries.find(x => x.id === editingId).timestamp : now.getTime(),
-                datestr: editingId ? diaries.find(x => x.id === editingId).datestr : now.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit', weekday: 'short' })
-            };
-            if(editingId) {
-                await supabaseClient.from('diaries').update(data).eq('id', editingId);
-            } else {
-                data.id = Date.now();
-                await supabaseClient.from('diaries').insert([data]);
-            }
-            closeEditor();
-            fetchDiaries();
-        }
-
-        async function deleteDiary(id) {
-            await supabaseClient.from('diaries').delete().eq('id', id);
-            fetchDiaries();
-        }
-
-        function renderDiaries() {
-            const grid = document.getElementById('diary-grid');
-            const iconsMap = { 
-                sun:'sun', cloud:'cloud', rain:'cloud-rain', lightning:'cloud-lightning', snow:'cloud-snow', wind:'wind', moon:'moon',
-                smile:'smile', heart:'heart', zap:'zap', coffee:'coffee', meh:'meh', frown:'frown', angry:'angry'
-            };
-            if (diaries.length === 0) {
-                grid.innerHTML = `<div style="text-align:center; padding: 50px; opacity: 0.5;">还没有记下任何记忆...</div>`;
-                return;
-            }
-            grid.innerHTML = diaries.map(d => `
-                <div class="diary-card glass" onclick="openEditor(${d.id})">
-                    <i data-lucide="trash-2" class="delete-btn" onclick="event.stopPropagation(); deleteDiary(${d.id});"></i>
-                    <div class="card-title-row">
-                        <h3>${d.title}</h3>
-                    </div>
-                    <div class="card-meta">
-                        <i data-lucide="${iconsMap[d.weather] || 'cloud-rain'}" style="width:16px;"></i>
-                        <i data-lucide="${iconsMap[d.mood] || 'smile'}" style="width:16px;"></i>
-                        <span style="margin-left: 5px;">${d.datestr || ''}</span>
-                    </div>
-                    <p>${d.content}</p>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
         window.onload = () => {
-            createRain(); 
-            renderTodos(); 
+            createRain();
+            renderTodos();
             fetchDiaries();
+            lucide.createIcons();
             document.getElementById('date-text').innerText = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
         }
     </script>
